@@ -26,12 +26,15 @@ def getIdrexml(s):
     id = s[int(s.rfind('/')) + 1 : int(s.find('?'))]
     return 'http://www.xiami.com/song/playlist/id/' + id + '/object_name/default/object_id'
 
+def getIdsXML(ids):
+    return ['http://www.xiami.com/song/playlist/id/' + id + '/object_name/default/object_id.xml' for id in ids]
+
 def get_xmlnode(node,name):
     return node.getElementsByTagName(name) if node else []
 
 if __name__ == '__main__':
-    url = getIdrexml('http://www.xiami.com/song/2262654?spm=a1z1s.3521865.23309997.1.VJOkkm')
-    print url
+    #url = getIdrexml('http://www.xiami.com/song/1770839568?')
+    # print url
 
     send_headers = {
          'Host': 'www.xiami.com',
@@ -39,12 +42,30 @@ if __name__ == '__main__':
          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     }
 
-    req = urllib2.Request(url,headers=send_headers)
+    req = urllib2.Request("http://www.xiami.com/space/lib-song/u/10741478",headers=send_headers)
     r = urllib2.urlopen(req)
     html = r.read()
+    # print html
 
-    root = etree.XML(html)
-    tree = etree.ElementTree(root)
-    tree.ElementTree()
-    #print  str2url('7h%5xo2%%8F48%_5f55c%4%%lt2.imF2552__3ke3EEb5255tFfa%8FE122lFeff5b3E1EEp%im272%965.ay%8be158%-%2liF%72727mu%5a79cd85n3Fe.158F%63pt3E8c4b-4EuAm.c%E712553hDf%%fc18-l')
+    from bs4 import BeautifulSoup
+    import time
+
+    soup = BeautifulSoup(html)
+    # print(soup.prettify())
+
+    song_ids = [ link.get('id')[int(link.get('id').rfind('_')) + 1 : ] for link in soup.find_all('tr') if link.get('id') != None ]
+
+    xmls = getIdsXML(song_ids)
+
+    for xml in xmls:
+        req_song = urllib2.Request(xml,headers=send_headers)
+        soup_song = BeautifulSoup(urllib2.urlopen(req_song).read())
+        #print soup_song.prettify()
+        time.sleep(3)
+
+        if soup_song.find('location') != None :
+            print str2url(soup_song.find('location').string)
+
+
+    # print  str2url('7h%5xo7172E_9pt32ea5E2EEt2.im%74F8383hD326c26%-tFfa%2%%13%7%_c%48e265np%im2F25795_3k15b43-2Eu%2liF5FE75ElFebE35c14-l3Fe.8844%66.ayab61%4%%lAm.c189%585mu%48d55255')
 
