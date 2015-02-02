@@ -1,8 +1,10 @@
 __author__ = 'sexybaby'
 import urllib2
-from lxml import etree
+import HTMLParser
+from bs4 import BeautifulSoup
+import time
+
 def str2url(s):
-    #s = '9hFaF2FF%_Et%m4F4%538t2i%795E%3pF.265E85.%fnF9742Em33e162_36pA.t6661983%x%6%%74%2i2%22735'
     num_loc = s.find('h')
     rows = int(s[0:num_loc])
     strlen = len(s) - num_loc
@@ -33,8 +35,6 @@ def get_xmlnode(node,name):
     return node.getElementsByTagName(name) if node else []
 
 if __name__ == '__main__':
-    #url = getIdrexml('http://www.xiami.com/song/1770839568?')
-    # print url
 
     send_headers = {
          'Host': 'www.xiami.com',
@@ -42,13 +42,9 @@ if __name__ == '__main__':
          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
     }
 
-    req = urllib2.Request("http://www.xiami.com/space/lib-song/u/10741478",headers=send_headers)
+    req = urllib2.Request("http://www.xiami.com/space/lib-song/u/37524414",headers=send_headers)
     r = urllib2.urlopen(req)
     html = r.read()
-    # print html
-
-    from bs4 import BeautifulSoup
-    import time
 
     soup = BeautifulSoup(html)
     # print(soup.prettify())
@@ -56,16 +52,14 @@ if __name__ == '__main__':
     song_ids = [ link.get('id')[int(link.get('id').rfind('_')) + 1 : ] for link in soup.find_all('tr') if link.get('id') != None ]
 
     xmls = getIdsXML(song_ids)
+    html_parser=HTMLParser.HTMLParser()
 
     for xml in xmls:
         req_song = urllib2.Request(xml,headers=send_headers)
-        soup_song = BeautifulSoup(urllib2.urlopen(req_song).read())
-        #print soup_song.prettify()
+        #print urllib2.urlopen(req_song).read()
+        soup_song = BeautifulSoup(urllib2.urlopen(req_song).read(),features='xml')
+        # print soup_song
         time.sleep(3)
 
         if soup_song.find('location') != None :
-            print str2url(soup_song.find('location').string)
-
-
-    # print  str2url('7h%5xo7172E_9pt32ea5E2EEt2.im%74F8383hD326c26%-tFfa%2%%13%7%_c%48e265np%im2F25795_3k15b43-2Eu%2liF5FE75ElFebE35c14-l3Fe.8844%66.ayab61%4%%lAm.c189%585mu%48d55255')
-
+            print html_parser.unescape(soup_song.title.string) + ": " +str2url(soup_song.find('location').string)
